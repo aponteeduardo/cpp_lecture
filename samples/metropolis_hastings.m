@@ -25,13 +25,17 @@ niter = htheta.niter;
 % Compute the square root of the covariance for the proposal distribution
 htheta.csigma = chol(htheta.sigma);
 
+otheta = htheta.csigma * randn(size(htheta.csigma, 1), 1);
+ollh = llh(y, u, otheta, ptheta);
+olpp = lpp(u, otheta, ptheta);
+
 % Samples from the posterior distribution
 post = struct();
 post.theta = zeros(numel(otheta), niter);
+post.ljp = zeros(1, niter);
+% Compute the acceptance rate
 
-otheta = htheta.csigma * randn(size(htheta, 1), 1);
-ollh = llh(y, u, otheta, ptheta);
-olpp = lpp(u, theta, ptheta);
+ar = 0;
 
 for i = 1: nburnin + niter
     % Propose a new sample
@@ -42,23 +46,28 @@ for i = 1: nburnin + niter
     % Compute log prior probability
     nlpp = lpp(u, ntheta, ptheta);
 
-    % Rejection criteriai in log space
-    preject = max(0, nllh + nlpp - ollh - olpp);
+    % Probability of acceptance
+    paccept = min(0, (nllh + nlpp) - (ollh + olpp));
 
     % If the samples is accepted keep it 
-    if preject > log(rand)
+    if exp(paccept) > rand
         otheta = ntheta;
         ollh = nllh;
         olpp = nlpp;
+
+        ar = ar + 1;
     end
 
     % Store your samples
     if i > nburnin
+        post.ljp(i - nburnin) = nlpp;
         post.theta(:, i - nburnin) = ntheta;
     end
 
 end
 
+
+post.ar = ar / (nburnin + niter);
 
 end % Metropolis hastings
 
@@ -66,7 +75,7 @@ function [l] = llh(y, u, theta, ptheta)
 % A simple model of learning a policy
 
 alpha = theta(1);
-alpha = arctan(alpha)/pi + 0.5 % Squeeze to the [0, 1] interval
+alpha = atan(alpha)/pi + 0.5; % Squeeze to the [0, 1] interval
 
 beta = theta(2);
 beta = exp(beta); % Make it always positive.
@@ -79,14 +88,15 @@ l = 0;
 for i = 1:numel(y)
     if y(i) == 0 % Case where decision is A
         % Likelihood of a decision
-        l = l + beta * vA - log(exp(beta * vA) + exp(beta * vB));
-        vA = vA + alpha(u(i) - vA);
+        l = l - log(1 + exp(beta * ( vB - vA )));
+        vA = vA + alpha * (u(i) - vA);
     elseif y(i) == 1 % Case where decision is B
         % Likelihood of a decision
-        l = l + beta * vB - log(exp(beta * vA) + exp(beta * vB));
-        vB = vB + alpha(u(i) - vB);
+        l = l - log(1 + exp(beta * ( vA - vB )));
+        vB = vB + alpha * (u(i) - vB);
     end
 end
+
 
 end % llh
 
@@ -95,11 +105,12 @@ function [p] = lpp(u, theta, ptheta)
 
 % We asssume that alpha is beta distributed
 alpha = theta(1);
-alpha = arctan(alpha)/pi + 0.5 % Squeeze to the [0, 1] interval
+alpha = atan(alpha)/pi + 0.5; % Squeeze to the [0, 1] interval
 
-p = log(betapdf(alpha, ptheta.alpha_A, ptheta.alpha_B));
+p = log(betapdf(alpha, ptheta.alpha_a, ptheta.alpha_b));
 
 % Beta is log normal distributed
+beta = theta(2);
 p = p + log(normpdf(beta, ptheta.beta_mu, ptheta.beta_sigma));
 
 end % lpp

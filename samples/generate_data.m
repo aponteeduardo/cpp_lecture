@@ -11,7 +11,7 @@ function generate_data()
 
 rng('shuffle');
 
-NTRIALS = 200;
+NTRIALS = 300;
 
 
 % Expected value of A
@@ -30,7 +30,7 @@ sjA = 2.0;
 sjB = 2.0;
 
 alpha = 0.05;
-beta = 3.0;
+beta = 1.5;
 
 theta = [alpha, beta];
 
@@ -79,7 +79,7 @@ for i = 1:ntrials
     jA(i) = sjA;
     jB(i) = sjB;
 
-    if rand > pA
+    if  pA > rand
         y(i) = A;
         u(i) = vA + sA * randn;
         sjA = sjA + alpha * (u(i) - sjA);

@@ -19,7 +19,7 @@ from scipy import io as scipio
 
 
 def mat_fname():
-    # Returns the name of the file
+    ''' Returns the name of the file. '''
 
     fname = 'simulation.mat'
     tdir = '../dump/simulations'
@@ -29,7 +29,7 @@ def mat_fname():
     return fname
 
 def normalize_reward(u):
-    # Normalizes the reward
+    ''' Normalizes the reward. '''
 
     mx = np.max(u)
     mn = np.min(u)
@@ -37,6 +37,19 @@ def normalize_reward(u):
     u = (u - mn) / (mx -mn)
     
     return u, mx, mn
+
+def png_fname():
+    ''' Name of the png file. '''
+
+    fname = 'simulation.png'
+    dname = '../dump/simulation/'
+
+    if not os.path.exists(dname):
+        os.mkdir(dname)
+
+    fname = os.path.join(dname, fname)
+
+    return fname
 
 if __name__ == '__main__':
 
@@ -49,20 +62,22 @@ if __name__ == '__main__':
     jA = data['jA']
     jB = data['jB']
 
-
-    fig, ax= pyl.subplots(2, 1)
+    fig, ax = pyl.subplots(2, 1)
 
     u, mx, mn = normalize_reward(u)
 
     ax[0].plot(jA, 'r', lw=2)
     ax[0].plot(jB, 'k', lw=2)
 
-    ax[0].legend(['$v_t^A$', '$v_t^B$'], loc=0)
+    ax[0].legend(['$v_t^A$', '$v_t^B$'], loc=0, fontsize=18)
 
     pvS = ax[1].plot(vS, lw=2)
     ax[1].plot(y, 'o')
 
-    ax[1].legend(['$p(y=A | v^A, v^B)$'], loc=0)
+    ax[1].legend(['$p(y=A | v^A, v^B)$'], loc=0, fontsize=18)
+
+    png = png_fname()
+    pyl.savefig(png)
 
     pyl.show()
     pass
