@@ -34,7 +34,6 @@ post = struct();
 post.theta = zeros(numel(otheta), niter);
 post.ljp = zeros(1, niter);
 % Compute the acceptance rate
-
 ar = 0;
 
 for i = 1: nburnin + niter
@@ -60,8 +59,8 @@ for i = 1: nburnin + niter
 
     % Store your samples
     if i > nburnin
-        post.ljp(i - nburnin) = nlpp;
-        post.theta(:, i - nburnin) = ntheta;
+        post.ljp(i - nburnin) = ollh + olpp;
+        post.theta(:, i - nburnin) = otheta;
     end
 
 end
@@ -88,11 +87,11 @@ l = 0;
 for i = 1:numel(y)
     if y(i) == 0 % Case where decision is A
         % Likelihood of a decision
-        l = l - log(1 + exp(beta * ( vB - vA )));
+        l = l - log(1 + exp(-beta * ( vA - vB )));
         vA = vA + alpha * (u(i) - vA);
     elseif y(i) == 1 % Case where decision is B
         % Likelihood of a decision
-        l = l - log(1 + exp(beta * ( vA - vB )));
+        l = l - log(1 + exp(-beta * ( vB - vA )));
         vB = vB + alpha * (u(i) - vB);
     end
 end
